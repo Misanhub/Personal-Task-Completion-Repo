@@ -1,0 +1,117 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This is to create a highly secured vpc for my dev environment
+
+# vpc, 2 public subnet, 2 private subnet, internet gateway(it was attached to the vpc)#
+# 2 route tables(1 public rt with subnets attached and 1 private rt with subnets attached)#
+# no natgateway created for the resources in the private subnet#
+
+Resources: 
+  myVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: "true" # not required, template would function if removed#
+      EnableDnsHostnames: "true" # not required, template would function if removed#
+      Tags:
+      - Key: team
+        Value: dev
+      - Key: batch
+        Value: victorious      
+
+  mySubnetpriv1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref myVPC
+      CidrBlock: 10.0.0.0/19 # each subnet would have 8192 hosts and vpc can still room for 4 more subnets with same number of host#
+      AvailabilityZone: "us-east-1a"
+      Tags:
+      - Key: type
+        Value: private-1
+
+  mySubnetpub1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref myVPC
+      CidrBlock: 10.0.32.0/19
+      AvailabilityZone: "us-east-1a"
+      Tags:
+      - Key: type
+        Value: public-1    
+
+  mySubnetpriv2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref myVPC
+      CidrBlock: 10.0.64.0/19
+      AvailabilityZone: "us-east-1b"
+      Tags:
+      - Key: type
+        Value: private-2 
+
+  mySubnetpub2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref myVPC
+      CidrBlock: 10.0.96.0/19
+      AvailabilityZone: "us-east-1b"
+      Tags:
+      - Key: type
+        Value: public-2        
+
+  myInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: team
+        Value: dev    
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref myVPC
+      InternetGatewayId: !Ref myInternetGateway
+
+  myPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref myVPC
+      Tags:
+      - Key: team
+        Value: dev   
+      - Key: name
+        Value: publicrt   
+
+  myPublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref mySubnetpub1
+      RouteTableId: !Ref myPublicRouteTable
+
+  myPublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref mySubnetpub2
+      RouteTableId: !Ref myPublicRouteTable
+ 
+
+  myPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref myVPC
+      Tags:
+      - Key: team
+        Value: dev   
+      - Key: name
+        Value: privatert      
+  myPrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref mySubnetpriv1
+      RouteTableId: !Ref myPrivateRouteTable
+  myPrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref mySubnetpriv2
+      RouteTableId: !Ref myPrivateRouteTable
+               
+#Outputs:
